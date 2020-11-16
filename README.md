@@ -2,7 +2,7 @@
 ## Usage
 
 ```bash
-$ git clone git@github.com:KoeInoue/docker-laravel.git
+$ git clone https://github.com/KoeInoue/docker-laravel.git
 $ cd docker-laravel
 $ make create-project # Install the latest Laravel project
 $ make install-recommend-packages # Not required

@@ -1,19 +1,14 @@
-FROM node:14.2-alpine as node
-FROM nginx:1.18-alpine
-LABEL maintainer="ucan-lab <yes@u-can.pro>"
-SHELL ["/bin/ash", "-oeux", "pipefail", "-c"]
+FROM centos:8
+RUN dnf -y update
 
-ENV TZ=UTC
+# install leatest nginx & openssl
+RUN dnf install -y nginx openssl
 
-RUN apk update && \
-  apk add --update --no-cache --virtual=.build-dependencies g++
+# make SSL server certificate
+RUN mkdir -p /etc/ssl/private && \
+  openssl req -new -newkey rsa:2048 -nodes -out /etc/ssl/private/server.csr -keyout /etc/ssl/private/server.key -subj "/CN=*.lvh.me" && \
+  openssl x509 -days 3650 -req -signkey /etc/ssl/private/server.key -in /etc/ssl/private/server.csr -out /etc/ssl/private/server.crt
 
-# node command
-COPY --from=node /usr/local/bin /usr/local/bin
-# npm command
-COPY --from=node /usr/local/lib /usr/local/lib
-# yarn command
-COPY --from=node /opt /opt
 # nginx config file
 COPY ./infra/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 

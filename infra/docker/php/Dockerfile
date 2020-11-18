@@ -1,6 +1,4 @@
 FROM php:7.4-fpm-buster
-LABEL maintainer="ucan-lab <yes@u-can.pro>"
-SHELL ["/bin/bash", "-oeux", "pipefail", "-c"]
 
 # timezone environment
 ENV TZ=UTC \
@@ -15,6 +13,7 @@ ENV TZ=UTC \
 COPY --from=composer:2.0 /usr/bin/composer /usr/bin/composer
 
 RUN apt-get update && \
+  apt-get install -y htop libfreetype6-dev libjpeg62-turbo-dev libpng-dev && \
   apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
@@ -23,7 +22,14 @@ RUN apt-get update && \
   mkdir /var/run/php-fpm && \
   docker-php-ext-install intl pdo_mysql zip bcmath && \
   composer config -g process-timeout 3600 && \
-  composer config -g repos.packagist composer https://packagist.org
+  composer config -g repos.packagist composer https://packagist.org && \
+  pecl install mailparse-3.0.3  && \
+  pecl install xdebug && \
+  pecl install redis && \
+  docker-php-ext-enable mailparse redis xdebug
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg 
+RUN docker-php-ext-install -j$(nproc) gd
 
 COPY ./infra/docker/php/php-fpm.d/zzz-www.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 COPY ./infra/docker/php/php.ini /usr/local/etc/php/php.ini
